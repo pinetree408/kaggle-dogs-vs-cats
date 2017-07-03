@@ -20,8 +20,8 @@ if __name__ == "__main__":
     cat_files_path = os.path.join(files_path, 'cat*.jpg')
     dog_files_path = os.path.join(files_path, 'dog*.jpg')
 
-    cat_files = sorted(glob(cat_files_path))[:500]
-    dog_files = sorted(glob(dog_files_path))[:500]
+    cat_files = sorted(glob(cat_files_path))[:2000]
+    dog_files = sorted(glob(dog_files_path))[:2000]
 
     n_files = len(cat_files) + len(dog_files)
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     Y_train = []
     Y_test = []
     for index, i in enumerate(index_shuf):
-        if index < (n_files * 0.9):
+        if index < int(n_files * 0.9):
             X_train.append(allX[i])
             Y_train.append(ally[i])
         else:
@@ -93,10 +93,11 @@ if __name__ == "__main__":
         train_writer = tf.summary.FileWriter(train_log_dir, sess.graph)
 
         # start training
-        for i in range(100):
+        batch_size = 5
+        for i in range(int((n_files * 0.9)/(batch_size * 9))):
             print i
-            batch_xs = X_train[i*9:(i+1)*9] 
-            batch_ts = Y_train[i*9:(i+1)*9]
+            batch_xs = X_train[i*9:(i+batch_size)*9] 
+            batch_ts = Y_train[i*9:(i+batch_size)*9]
             feed_train = {x: batch_xs, t: batch_ts, keep_prob: 0.5}
             train_result = sess.run([merged, train_step], feed_dict=feed_train)
             train_writer.add_summary(train_result[0], i)
