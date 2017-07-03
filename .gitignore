@@ -1,0 +1,12 @@
+# for vim
+*.sw[pon]
+
+# for python virtualenv
+venv/
+
+# for python
+*.py[cod]
+
+# for this project
+log/
+train/
