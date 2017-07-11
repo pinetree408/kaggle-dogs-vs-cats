@@ -25,23 +25,23 @@ if __name__ == "__main__":
 
     n_files = len(cat_files) + len(dog_files)
 
-    size_image = 64
+    image_size = 208
 
-    allX = np.zeros((n_files, size_image * size_image), dtype='float64')
+    allX = np.zeros((n_files, image_size * image_size), dtype='float64')
     ally = np.zeros((n_files, 2), dtype='float64')
 
     count = 0
     for f in cat_files:
         img = io.imread(f, as_grey=True)
-        new_img = imresize(img, (size_image, size_image))
-        allX[count] = np.array(new_img).reshape(size_image * size_image)
+        new_img = imresize(img, (image_size, image_size))
+        allX[count] = np.array(new_img).reshape(image_size * image_size)
         ally[count] = np.array([0.0, 1.0])
         count += 1
 
     for f in dog_files:
         img = io.imread(f, as_grey=True)
-        new_img = imresize(img, (size_image, size_image))
-        allX[count] = np.array(new_img).reshape(size_image * size_image)
+        new_img = imresize(img, (image_size, image_size))
+        allX[count] = np.array(new_img).reshape(image_size * image_size)
         ally[count] = np.array([1.0, 0.0])
         count += 1
 
@@ -59,22 +59,21 @@ if __name__ == "__main__":
             X_test.append(allX[i])
             Y_test.append(ally[i])
 
-    image_size = 64
-
     x = tf.placeholder(tf.float32, [None, image_size * image_size])
     x_image = tf.reshape(x, [-1, image_size, image_size, 1])
 
     keep_prob = tf.placeholder(tf.float32)
 
-    k = model.inference(x_image, keep_prob)
+    k = model.inference(x_image, image_size, keep_prob)
     p = tf.nn.softmax(k)
 
     t = tf.placeholder(tf.float32, [None, 2])
+    learning_rate = 0.0001
 
     with tf.name_scope('train') as scope: 
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=k,labels=t)) 
         loss_summary = tf.summary.scalar('cost', loss)
-        train_step = tf.train.AdamOptimizer(0.0001).minimize(loss)
+        train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
     with tf.name_scope('test') as scope:
         correct_prediction = tf.equal(tf.argmax(p, 1), tf.argmax(t, 1))
@@ -93,7 +92,7 @@ if __name__ == "__main__":
         train_writer = tf.summary.FileWriter(train_log_dir, sess.graph)
 
         # start training
-        batch_size = 5
+        batch_size = 1
         for i in range(int((n_files * 0.9)/(batch_size * 9))):
             print i
             batch_xs = X_train[i*9:(i+batch_size)*9] 

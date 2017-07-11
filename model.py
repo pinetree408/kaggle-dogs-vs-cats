@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def inference(image, keep_prob):
+def inference(image, image_size, keep_prob):
 
     # conv1
     num_filters1 = 32
@@ -23,9 +23,9 @@ def inference(image, keep_prob):
     h_pool2 = tf.nn.max_pool(h_conv2_cutoff, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
     
     # fully connected
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 16*16*num_filters2])
+    h_pool2_flat = tf.reshape(h_pool2, [-1, (image_size/4)*(image_size/4)*num_filters2])
     
-    num_units1 = 16*16*num_filters2
+    num_units1 = (image_size/4)*(image_size/4)*num_filters2
     num_units2 = 1024
 
     w2 = tf.Variable(tf.truncated_normal([num_units1, num_units2]))
@@ -39,4 +39,3 @@ def inference(image, keep_prob):
     k = tf.matmul(hidden2_drop, w0) + b0
 
     return k
-
