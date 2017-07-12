@@ -20,12 +20,12 @@ if __name__ == "__main__":
     cat_files_path = os.path.join(files_path, 'cat*.jpg')
     dog_files_path = os.path.join(files_path, 'dog*.jpg')
 
-    cat_files = sorted(glob(cat_files_path))[:2000]
-    dog_files = sorted(glob(dog_files_path))[:2000]
+    cat_files = sorted(glob(cat_files_path))[:4000]
+    dog_files = sorted(glob(dog_files_path))[:4000]
 
     n_files = len(cat_files) + len(dog_files)
 
-    image_size = 208
+    image_size = 128
 
     allX = np.zeros((n_files, image_size * image_size), dtype='float64')
     ally = np.zeros((n_files, 2), dtype='float64')
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         train_writer = tf.summary.FileWriter(train_log_dir, sess.graph)
 
         # start training
-        batch_size = 1
+        batch_size = 4
         for i in range(int((n_files * 0.9)/(batch_size * 9))):
             print i
             batch_xs = X_train[i*9:(i+batch_size)*9] 
