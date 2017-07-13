@@ -1,12 +1,7 @@
 import tensorflow as tf
 import time
 import model
-import os
-import random
-from glob import glob
-from skimage import io
-from scipy.misc import imresize
-import numpy as np
+from dataset import get_dataset
 
 if __name__ == "__main__":
 
@@ -15,60 +10,25 @@ if __name__ == "__main__":
     seed = int(time.time())
     tf.set_random_seed(seed)
 
-    files_path = 'train/'
-
-    cat_files_path = os.path.join(files_path, 'cat*.jpg')
-    dog_files_path = os.path.join(files_path, 'dog*.jpg')
-
-    cat_files = sorted(glob(cat_files_path))[:4000]
-    dog_files = sorted(glob(dog_files_path))[:4000]
-
-    n_files = len(cat_files) + len(dog_files)
-
     image_size = 128
 
-    allX = np.zeros((n_files, image_size * image_size), dtype='float64')
-    ally = np.zeros((n_files, 2), dtype='float64')
+    log_dir = "log/"
+    test_log_dir = log_dir + "test"
+    train_log_dir = log_dir + "train"
 
-    count = 0
-    for f in cat_files:
-        img = io.imread(f, as_grey=True)
-        new_img = imresize(img, (image_size, image_size))
-        allX[count] = np.array(new_img).reshape(image_size * image_size)
-        ally[count] = np.array([0.0, 1.0])
-        count += 1
+    learning_rate = 0.0001
+    batch_size = 4
+    epoches = 100
 
-    for f in dog_files:
-        img = io.imread(f, as_grey=True)
-        new_img = imresize(img, (image_size, image_size))
-        allX[count] = np.array(new_img).reshape(image_size * image_size)
-        ally[count] = np.array([1.0, 0.0])
-        count += 1
-
-    index_shuf = range(n_files)
-    random.shuffle(index_shuf)
-    X_train = []
-    X_test = []
-    Y_train = []
-    Y_test = []
-    for index, i in enumerate(index_shuf):
-        if index < int(n_files * 0.9):
-            X_train.append(allX[i])
-            Y_train.append(ally[i])
-        else:
-            X_test.append(allX[i])
-            Y_test.append(ally[i])
+    x_train, x_test, y_train, y_test, n_files = get_dataset('train/', image_size)
 
     x = tf.placeholder(tf.float32, [None, image_size * image_size])
     x_image = tf.reshape(x, [-1, image_size, image_size, 1])
 
-    keep_prob = tf.placeholder(tf.float32)
-
-    k = model.inference(x_image, image_size, keep_prob)
+    k = model.inference(x_image, image_size)
     p = tf.nn.softmax(k)
 
     t = tf.placeholder(tf.float32, [None, 2])
-    learning_rate = 0.0001
 
     with tf.name_scope('train') as scope: 
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=k,labels=t)) 
@@ -82,25 +42,20 @@ if __name__ == "__main__":
 
     merged = tf.summary.merge_all()
 
-    log_dir = "log/"
-    test_log_dir = log_dir + "test"
-    train_log_dir = log_dir + "train"
-
     with tf.Session() as sess:
         tf.global_variables_initializer().run()
         test_writer = tf.summary.FileWriter(test_log_dir, sess.graph)
         train_writer = tf.summary.FileWriter(train_log_dir, sess.graph)
+        for j in range(epoches):
+            print j
+            for i in range(int((n_files * 0.9)/(batch_size * 9))):
+                batch_x = x_train[i*9:(i+batch_size)*9] 
+                batch_t = y_train[i*9:(i+batch_size)*9]
+                feed_train = {x: batch_x, t: batch_t}
+                train_result = sess.run([merged, train_step], feed_dict=feed_train)
 
-        # start training
-        batch_size = 4
-        for i in range(int((n_files * 0.9)/(batch_size * 9))):
-            print i
-            batch_xs = X_train[i*9:(i+batch_size)*9] 
-            batch_ts = Y_train[i*9:(i+batch_size)*9]
-            feed_train = {x: batch_xs, t: batch_ts, keep_prob: 0.5}
-            train_result = sess.run([merged, train_step], feed_dict=feed_train)
-            train_writer.add_summary(train_result[0], i)
-            if i > 0 and i % 10 == 0: 
-                feed_test = {x: X_test, t: Y_test, keep_prob: 1.0}
-                test_result = sess.run([merged], feed_dict=feed_test)
-                test_writer.add_summary(test_result[0], i)
+            feed_test = {x: x_test, t: y_test}
+            test_result = sess.run([merged], feed_dict=feed_test)
+            
+            train_writer.add_summary(train_result[0], j)
+            test_writer.add_summary(test_result[0], j)
