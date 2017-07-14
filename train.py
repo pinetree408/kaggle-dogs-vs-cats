@@ -22,13 +22,16 @@ if __name__ == "__main__":
 
     x_train, x_test, y_train, y_test, n_files = get_dataset('train/', image_size)
 
-    x = tf.placeholder(tf.float32, [None, image_size * image_size])
-    x_image = tf.reshape(x, [-1, image_size, image_size, 1])
+    x = tf.placeholder(tf.float32, [None, image_size * image_size * 3])
+    x_image = tf.reshape(x, [-1, image_size, image_size, 3])
 
-    k = model.inference(x_image, image_size)
+    keep_prob = tf.placeholder(tf.float32)
+
+    k = model.inference(x_image, keep_prob, image_size)
     p = tf.nn.softmax(k)
 
     t = tf.placeholder(tf.float32, [None, 2])
+
 
     with tf.name_scope('train') as scope: 
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=k,labels=t)) 
@@ -51,10 +54,18 @@ if __name__ == "__main__":
             for i in range(int((n_files * 0.9)/(batch_size * 9))):
                 batch_x = x_train[i*9:(i+batch_size)*9] 
                 batch_t = y_train[i*9:(i+batch_size)*9]
-                feed_train = {x: batch_x, t: batch_t}
+                feed_train = {
+                        x: batch_x,
+                        t: batch_t,
+                        keep_prob: 0.5
+                        }
                 train_result = sess.run([merged, train_step], feed_dict=feed_train)
 
-            feed_test = {x: x_test, t: y_test}
+            feed_test = {
+                    x: x_test,
+                    t: y_test,
+                    keep_prob: 1.0
+                    }
             test_result = sess.run([merged], feed_dict=feed_test)
             
             train_writer.add_summary(train_result[0], j)
