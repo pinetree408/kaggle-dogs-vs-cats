@@ -32,11 +32,10 @@ if __name__ == "__main__":
 
     t = tf.placeholder(tf.float32, [None, 2])
 
-
     with tf.name_scope('train') as scope: 
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=k,labels=t)) 
-        loss_summary = tf.summary.scalar('cost', loss)
-        train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=k,labels=t)) 
+        loss_summary = tf.summary.scalar('loss', cross_entropy)
+        train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
 
     with tf.name_scope('test') as scope:
         correct_prediction = tf.equal(tf.argmax(p, 1), tf.argmax(t, 1))
