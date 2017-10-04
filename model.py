@@ -6,6 +6,7 @@ def inference(image, keep_prob, image_size):
     # conv1
     num_filters1 = 32
     layer_conv1, weights_conv1 = conv_layer(image, 3, 3, num_filters1)
+    
     # conv2
     num_filters2 = 32
     layer_conv2, weights_conv2 = conv_layer(layer_conv1, num_filters1, 3, num_filters2)
