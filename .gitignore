@@ -10,3 +10,4 @@ venv/
 # for this project
 log/
 train/
+data/
